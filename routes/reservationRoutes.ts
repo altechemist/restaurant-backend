@@ -3,7 +3,7 @@ import { createReservation, getReservations } from "../controllers/reservationCo
 
 const router = Router();
 
-router.post('/reservations', createReservation);
-router.get('/reservations', getReservations);
+router.post('/addReservation', createReservation);
+router.get('/getReservations', getReservations);
 
 export default router;

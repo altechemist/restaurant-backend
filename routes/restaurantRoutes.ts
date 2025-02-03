@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { createReservation, getReservations } from '../controllers/reservationController';
+import { addRestaurant, getRestaurants } from '../controllers/restaurantController';
 
 const router = Router();
 
-router.post('/reservations', createReservation);  // This should point to a valid function
-router.get('/reservations', getReservations);    // This should point to a valid function
+router.post('/addRestaurant', addRestaurant);  // This should point to a valid function
+router.get('/getRestaurant', getRestaurants);    // This should point to a valid function
 
 export default router;

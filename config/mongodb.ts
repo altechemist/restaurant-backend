@@ -1,27 +1,104 @@
-import { MongoClient, Db } from "mongodb";
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { User } from '../models/userModel';
+import { Restaurant } from '../models/restaurantModel';
+import { Reservation } from '../models/reservationModel';
 
 dotenv.config();
 
-// MongoDB URI from environment variables
 const connectionString = process.env.MONGO_URI as string;
-const client = new MongoClient(connectionString);
 
-let connectDB: Db | null = null; // Will hold the DB connection
+let connectDB: mongoose.Connection | null = null;
 
-// Async function to connect to MongoDB and return the DB connection
-const connectToDB = async (): Promise<Db> => {
-  if (connectDB) return connectDB; // If already connected, return the existing connection
-  
+const connectToDB = async (): Promise<mongoose.Connection> => {
+  if (connectDB) return connectDB;
+
   try {
-    const conn = await client.connect();
-    connectDB = conn.db("restaurant"); // Specify your database name here
-    console.log("MongoDB connected successfully");
+    console.log("🌐 Connecting to MongoDB...");
+    const startTime = Date.now();
+
+    // Set mongoose connection options
+    const options = {
+      serverSelectionTimeoutMS: 30000,  // 30 seconds for server selection
+      socketTimeoutMS: 45000,          // 45 seconds for socket timeout
+    };
+
+    // Connect to MongoDB using Mongoose
+    await mongoose.connect(connectionString, options);
+
+    const endTime = Date.now();
+    console.log(`✅ MongoDB connected successfully in ${endTime - startTime} ms`);
+
+    connectDB = mongoose.connection;
+
+    // Ensure required collections exist
+    await createCollections(connectDB);
+
     return connectDB;
   } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error; // Throw error to handle it at higher level
+    console.error("❌ MongoDB connection error:", error);
+    throw error;
   }
 };
 
-export { connectToDB }; // Export the function to use in other files
+// Function to check & create missing collections (with Mongoose)
+const createCollections = async (db: mongoose.Connection) => {
+  try {
+    const startTime = Date.now();
+    const existingCollections = await db.db?.listCollections().toArray() || [];
+    const existingCollectionNames = existingCollections.map((c) => c.name);
+
+    const requiredCollections = ["users", "restaurants", "reservations"];
+
+    for (const collection of requiredCollections) {
+      if (!existingCollectionNames.includes(collection)) {
+        console.log(`✅ Collection '${collection}' is missing. Creating it...`);
+
+        // Insert sample data to create collections
+        if (collection === 'users') {
+          const user = new User({
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            password: 'hashedpassword123',
+          });
+          await user.save();
+        }
+
+        if (collection === 'restaurants') {
+          const restaurant = new Restaurant({
+            name: 'The Great Restaurant',
+            address: '123 Main St, City, Country',
+            rating: 4.5,
+          });
+          await restaurant.save();
+        }
+
+        if (collection === 'reservations') {
+          const user = await User.findOne({ email: 'john.doe@example.com' });
+          const restaurant = await Restaurant.findOne({ name: 'The Great Restaurant' });
+
+          if (user && restaurant) {
+            const reservation = new Reservation({
+              userId: user._id,
+              restaurantId: restaurant._id,
+              date: new Date(),
+              numberOfPeople: 4,
+            });
+            await reservation.save();
+          }
+        }
+
+        console.log(`✔ Created missing collection: '${collection}' with sample data.`);
+      } else {
+        console.log(`✔ Collection '${collection}' already exists`);
+      }
+    }
+
+    const endTime = Date.now();
+    console.log(`⏱ Collection check completed in ${endTime - startTime} ms`);
+  } catch (error) {
+    console.error("❌ Error checking/creating collections:", error);
+  }
+};
+
+export { connectToDB };
