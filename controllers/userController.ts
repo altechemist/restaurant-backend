@@ -8,9 +8,10 @@ import generateToken from '../utils/generateToken';
  * @route POST /api/users/register
  * @access Public
  */
+
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({ error: "All fields are required" });
@@ -25,7 +26,9 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const userRole = role || "user"; // Set default role
+
+    const user = await User.create({ name, email, password: hashedPassword, role: userRole });
 
     const token = generateToken(user._id.toString());
     res.status(201).json({ message: "User registered successfully", token });
@@ -33,6 +36,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
+
 
 /**
  * @desc Authenticate user & get token

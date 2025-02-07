@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 
 const reservationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  restaurant_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
+  restaurant_name: {type: String, required: true},
   fullName: {type: String, required: true },
   email: { type: String, required: true },
   phoneNumber: {type: String, required: true },

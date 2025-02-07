@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Reservation } from '../models/reservationModel';
+import { error } from 'console';
 
 // Create a reservation
 export const createReservation = async (req: Request, res: Response): Promise<void> => {
@@ -8,19 +9,40 @@ export const createReservation = async (req: Request, res: Response): Promise<vo
     await reservation.save();
     res.status(201).json(reservation);
   } catch (err) {
-    res.status(400).json({ message: 'Error creating reservation' });
+    res.status(400).json({ message: err });
   }
 };
 
 // Fetch all reservations
 export const getReservations = async (req: Request, res: Response): Promise<void> => {
   try {
-    const reservations = await Reservation.find().populate('restaurant').populate('user');
-    res.json(reservations);
+
+    const reservations = await Reservation.find()
+      .populate('restaurant_id')  // Correct field name here
+      .populate('user_id');  // Populate user details
+
+
+    res.json(reservations);  // Send the reservations as a response
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching reservations' });
+    res.status(500).json({ message: err || 'Error fetching reservations' });
   }
 };
+
+// Get user reservations
+export const getUserReservations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.userId;  // Get user_id from the URL parameter
+    const reservations = await Reservation.find({ user_id: userId })
+      .populate('restaurant')
+      .populate('user');
+
+    res.json(reservations);  // Send the filtered reservations as a response
+  } catch (err) {
+    res.status(500).json({ message: err || 'Error fetching user reservations' });
+  }
+};
+
+
 
 // Fetch a single reservation by ID
 export const getReservation = async (req: Request, res: Response): Promise<void> => {
@@ -46,7 +68,7 @@ export const updateReservation = async (req: Request, res: Response): Promise<vo
     }
     res.json(updatedReservation);
   } catch (err) {
-    res.status(400).json({ message: 'Error updating reservation' });
+    res.status(400).json({ message: 'Error updating reservation ', err });
   }
 };
 
